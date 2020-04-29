@@ -1,0 +1,105 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+  </head>
+<body ng-app="mainApp">
+<div ng-controller="MainCtrl" class="container">
+  <h2>Available Products</h2>     
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>price/Item</th>
+        <th>Quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat ="product in products" ng-class="{'selected':$index == selectedRow}" ng-click="setClickedRow($index,product)">
+        <td>{{product.name}}</td>
+        <td>{{product.price| currency : "Rs "}}</td>
+        <td > {{product.quantity}}</td>
+		<td><button>Add Item</button></td>
+      </tr>
+	  </tbody>
+  </table>
+  <div ng-if = "billingProducts.length>0">
+        <h1>Bill Payment</h1>
+    <div class="panel">
+        <table class="table">
+			<thead>
+			  <tr>
+				<th>Name</th>
+				<th>price/Item</th>
+				<th>Quantity</th>
+				<th></th>
+				<th>Total price</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr ng-repeat ="billingProduct in billingProducts">
+				<td>{{billingProduct.name}}</td>
+				<td>{{billingProduct.price | currency : "Rs "}}</td>
+				<td><input ng-model="billingProduct.quantity" /></td>
+				<td><button ng-click = "quantityChange(billingProduct)">Add quantity</button></td>
+				<td>{{billingProduct.totalprice}}</td>
+			  </tr>
+			  </tbody>
+		  </table>
+	</div>
+  </div>
+</div>
+
+<script>
+var mainApp = angular.module('mainApp', []);
+
+mainApp.controller('MainCtrl', function ($scope, $http) {
+
+$http.get("http://localhost:8080/products/")
+  .then(function(response) {
+    $scope.products = response.data;
+	console.log(response);
+  });
+  
+$scope.billingProducts = [];
+$scope.selectedRow = null;  // initialize our variable to null
+  $scope.setClickedRow = function(index,product){  //function that sets the value of selectedRow to current index
+     $scope.selectedRow = index;
+	 var item = {"name":product.name,"price":product.price,"quantity":"0","totalprice" : 0};
+	
+	 if (parseInt(product.quantity) == 0) {
+		alert('Item not available');
+	 } else {
+		$scope.billingProducts.push(item);
+	 }
+  }
+  
+  $scope.quantityChange = function(billingProduct) {
+	for (var i in $scope.products) {
+		if ($scope.products[i].name == billingProduct.name) {
+			$scope.products[i].quantity = parseInt($scope.products[i].quantity) - parseInt(billingProduct.quantity);
+		}
+	}
+	for (var j in $scope.billingProducts) {
+		if ($scope.billingProducts[j].name == billingProduct.name) {
+			$scope.billingProducts[j].totalprice = parseInt($scope.billingProducts[j].quantity) * $scope.billingProducts[j].price;
+		}
+	}
+  }
+  
+    
+  });
+</script>
+<style>
+.selected {
+    background-color:gray;
+    color:black;
+    font-weight:bold;
+}
+</style>
+</body>
+</html>
